@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#111111" />
+  <title>Negan — Escena privada</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div>
+      <strong>NEGAN</strong>
+      <span>escena privada</span>
+    </div>
+    <button id="settingsBtn" class="ghost">⚙︎</button>
+  </header>
+
+  <main>
+    <section id="chat" aria-live="polite"></section>
+  </main>
+
+  <footer>
+    <textarea id="input" rows="3" placeholder="Escribe como Oddi…"></textarea>
+    <div class="actions">
+      <button id="continueBtn" class="secondary">Continuar desde aquí</button>
+      <button id="sendBtn">Enviar</button>
+      <button id="exportBtn" class="secondary">Cerrar y exportar</button>
+    </div>
+    <div id="status"></div>
+  </footer>
+
+  <dialog id="settings">
+    <form method="dialog">
+      <h2>Ajustes</h2>
+      <label>URL del Worker
+        <input id="workerUrl" type="url" placeholder="https://tu-worker.workers.dev" />
+      </label>
+      <label>Modelo
+        <input id="model" value="qwen/qwen3.6-27b" />
+      </label>
+      <label>Temperatura
+        <input id="temperature" type="number" min="0" max="2" step="0.1" value="0.85" />
+      </label>
+      <p class="hint">La clave de Groq no se guarda aquí: se almacena como secreto en el Worker.</p>
+      <div class="dialogActions">
+        <button value="cancel" class="secondary">Cancelar</button>
+        <button id="saveSettings" value="default">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="context.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
