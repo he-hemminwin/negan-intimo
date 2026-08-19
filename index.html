@@ -42,7 +42,10 @@
       <label>Temperatura
         <input id="temperature" type="number" min="0" max="2" step="0.1" value="0.85" />
       </label>
-      <p class="hint">La clave de Groq no se guarda aquí: se almacena como secreto en el Worker.</p>
+      <label>Estado físico actual de la escena
+        <textarea id="sceneState" rows="11" placeholder="Ej.: lugar, postura de Negan, postura de Oddi, quién está encima/debajo, orientación, ropa, manos, distancia, último movimiento..."></textarea>
+      </label>
+      <p class="hint">Este bloque se envía al modelo en cada turno y tiene prioridad sobre resúmenes anteriores. Actualízalo solo si necesitas corregir la geometría/posición. La clave de Groq no se guarda aquí.</p>
       <div class="dialogActions">
         <button value="cancel" class="secondary">Cancelar</button>
         <button id="saveSettings" value="default">Guardar</button>

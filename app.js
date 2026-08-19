@@ -7,12 +7,26 @@ const settings = $('#settings');
 const DEFAULTS = {
   workerUrl: localStorage.getItem('negan_worker_url') || '',
   model: localStorage.getItem('negan_model') || 'qwen/qwen3.6-27b',
-  temperature: Number(localStorage.getItem('negan_temperature') || '0.85')
+  temperature: Number(localStorage.getItem('negan_temperature') || '0.85'),
+  sceneState: localStorage.getItem('negan_scene_state') || window.INITIAL_SCENE_STATE || ''
 };
 
 let messages = JSON.parse(localStorage.getItem('negan_intimo_history') || 'null') || [
   { role: 'user', content: window.INITIAL_USER_TURN }
 ];
+
+function cleanModelText(text=''){
+  let out = String(text);
+  // Cinturón de seguridad: aunque el proveedor devolviera bloques <think>, no se muestran ni se guardan.
+  out = out.replace(/<think>[\s\S]*?<\/think>\s*/gi, '');
+  // Algunos modelos pueden omitir la etiqueta de apertura y dejar solo </think>.
+  out = out.replace(/^[\s\S]*?<\/think>\s*/i, '');
+  return out.trim();
+}
+
+// Limpia historiales antiguos que pudieran haber guardado razonamiento visible.
+messages = messages.map(m => m.role === 'assistant' ? {...m, content: cleanModelText(m.content)} : m);
+localStorage.setItem('negan_intimo_history', JSON.stringify(messages));
 
 function render(){
   chatEl.innerHTML='';
@@ -34,6 +48,11 @@ function render(){
 function persist(){ localStorage.setItem('negan_intimo_history', JSON.stringify(messages)); }
 function setStatus(t){ statusEl.textContent=t; }
 
+function liveSystemPrompt(){
+  const sceneState = localStorage.getItem('negan_scene_state') || window.INITIAL_SCENE_STATE || '';
+  return `${window.NEGAN_CONTEXT}\n\nESTADO FÍSICO/ESPACIAL ACTUAL — PRIORIDAD MÁXIMA\n${sceneState}\n\nREGLA: conserva esta geometría hasta que un mensaje del usuario o una acción de Negan la cambie explícitamente. No inventes que alguien está encima, debajo, sentado, tumbado o de pie si no consta aquí o en el historial.`;
+}
+
 async function askModel(extraMessages=[]){
   const url=(localStorage.getItem('negan_worker_url')||'').replace(/\/$/,'');
   if(!url){ settings.showModal(); throw new Error('Configura primero la URL del Worker.'); }
@@ -44,14 +63,15 @@ async function askModel(extraMessages=[]){
     method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
       model, temperature,
-      system: window.NEGAN_CONTEXT,
+      system: liveSystemPrompt(),
       messages:[...messages,...extraMessages]
     })
   });
   if(!res.ok){ const txt=await res.text(); throw new Error(txt||`Error ${res.status}`); }
   const data=await res.json();
-  if(!data.text) throw new Error('La respuesta llegó vacía.');
-  return data.text;
+  const cleaned=cleanModelText(data.text || '');
+  if(!cleaned) throw new Error('La respuesta llegó vacía.');
+  return cleaned;
 }
 
 async function continueScene(){
@@ -93,8 +113,12 @@ $('#saveSettings').onclick=()=>{
   localStorage.setItem('negan_worker_url',$('#workerUrl').value.trim());
   localStorage.setItem('negan_model',$('#model').value.trim()||'qwen/qwen3.6-27b');
   localStorage.setItem('negan_temperature',$('#temperature').value||'0.85');
+  localStorage.setItem('negan_scene_state',$('#sceneState').value.trim());
 };
 inputEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}});
 
-$('#workerUrl').value=DEFAULTS.workerUrl; $('#model').value=DEFAULTS.model; $('#temperature').value=DEFAULTS.temperature;
+$('#workerUrl').value=DEFAULTS.workerUrl;
+$('#model').value=DEFAULTS.model;
+$('#temperature').value=DEFAULTS.temperature;
+$('#sceneState').value=DEFAULTS.sceneState;
 render();
